@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MapReduce_DataMining_Project.iml" filepath="$PROJECT_DIR$/.idea/modules/MapReduce_DataMining_Project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MapReduce_DataMining_Project_main.iml" filepath="$PROJECT_DIR$/.idea/modules/MapReduce_DataMining_Project_main.iml" group="MapReduce_DataMining_Project" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MapReduce_DataMining_Project_test.iml" filepath="$PROJECT_DIR$/.idea/modules/MapReduce_DataMining_Project_test.iml" group="MapReduce_DataMining_Project" />
+    </modules>
+  </component>
+</project>
