@@ -1,7 +1,7 @@
 group 'com.datamining'
 version '1.0-SNAPSHOT'
 
-mainClass = "com.datamining.WekaModel"
+//mainClass = "com.datamining.WekaModel"
 apply plugin: 'java'
 
 sourceCompatibility = 1.8
