@@ -10,11 +10,11 @@ import weka.core.Instances;
 /**
  * Created by Naomi on 11/30/16.
  */
-public class WikaModel {
+public class WekaModel {
     public static void main(String[] args) throws Exception {
 
         // Declare two numeric attributes
-       
+
     }
 
 }
