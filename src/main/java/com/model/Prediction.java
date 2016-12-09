@@ -7,22 +7,12 @@ import java.io.*;
 import java.net.URI;
 import java.util.*;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
+
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.Evaluation;
-import weka.core.Attribute;
-import weka.core.FastVector;
-import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 import weka.filters.Filter;
@@ -39,7 +29,7 @@ public class Prediction
             Classifier classifier = null;
             File[] files = new File("./models").listFiles();
             for (File f:files){
-                if (!f.getName().endsWith(".crc") && !f.getName().endsWith("_SUCCESS")) {
+                if (f.getName().endsWith(".model") ) {
                     try {
                         classifier = (Classifier) weka.core.SerializationHelper.read(f.toString());
                         } catch (Exception e) {
@@ -56,13 +46,19 @@ public class Prediction
             while ((strLineRead = br.readLine()) != null) {
                 header = strLineRead;
             }
-            System.out.println("model size: "+models.size());
-            System.out.println("header is "+header);
+            ArrayList<String> input = new ArrayList<String>(Arrays.asList(header.split(",")));
+            input.remove(0);
+            String temp = input.toString();
+            header = temp.substring(1, temp.length()-1);
         }
 
         public void map(Object key, Text values, Context context) throws IOException, InterruptedException {
             Instances testInstances = null;
-            String line = "\n"+values.toString();
+            ArrayList<String> input = new ArrayList<String>(Arrays.asList(values.toString().split(",")));
+            String sampleID = input.get(0);
+            input.remove(0);
+            String temp = input.toString();
+            String line = "\n"+temp.substring(1, temp.length()-1);
             if (line.contains("LATITUDE")) return;
             InputStream headerIS = new ByteArrayInputStream(header.getBytes("us-ascii"));
             InputStream dataIS = new ByteArrayInputStream(line.getBytes("us-ascii"));
@@ -81,7 +77,7 @@ public class Prediction
             NumericToNominal convert= new NumericToNominal();
             String[] options= new String[2];
             options[0]="-R";
-            options[1]="150";  //range of variables to make nominal
+            options[1]="32";  //range of variables to make nominal
 
             Instances testInstances1 =null;
             try {
@@ -95,50 +91,34 @@ public class Prediction
 
             // Mark the last attribute in each instance as the true class.
             testInstances1.setClassIndex(testInstances1.numAttributes()-1);
-            testInstances1.setClass(testInstances1.attribute(149));
 
             int numTestInstances = testInstances1.numInstances();
-            System.out.printf("There are %d test instances\n", numTestInstances);
 
-            // Get the true class label from the instance's own classIndex.
-            String trueClassLabel =
-                    testInstances1.instance(0).toString(testInstances1.classIndex());
-            Map<String,Integer> count = new HashMap<String, Integer>();
-            Integer sum = 0;
-            Integer max = 0;
+
+            Integer countZero = 0;
+            Integer countOne = 0;
             String p = null;
-            for(int i=0;i<3;i++)
+            for(int i=0;i<models.size();i++)
             {
-//                System.out.println(models.get(i));
                 try {
                     // Make the prediction here.
                     double predictionIndex = models.get(i).classifyInstance(testInstances1.instance(0));
-                    System.out.println("prediction index " +predictionIndex);
-                    // Get the predicted class label from the predictionIndex.
-                    String predictedClassLabel =
-                            testInstances1.classAttribute().value((int) predictionIndex);
-//                    System.out.printf("predicted label"+
-//                            predictedClassLabel);
-                    if (count.containsKey(predictedClassLabel)){
-                        sum = count.get(predictedClassLabel) + 1;
-                        count.put(predictedClassLabel, sum);
-                    }else
-                    count.put(predictedClassLabel,1);
-
+                    if(predictionIndex == 0.0)
+                    	countZero++;
+                    else
+                    	countOne++;
+                    
                 } catch (Exception e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-                for (Map.Entry<String,Integer> entry : count.entrySet()) {
-                    if (entry.getValue() > max){
-                        max = entry.getValue();
-                        p = entry.getKey();
-                    }
-                }
+               
             }
-            context.write(new Text("SAMPLING ID"), new Text(p.toString()));
-
-
+            
+            if(countOne>=countZero)
+            	context.write(new Text(sampleID), new Text("1"));
+            else
+            	context.write(new Text(sampleID), new Text("0"));
         }
     }
 }
