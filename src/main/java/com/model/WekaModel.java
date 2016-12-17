@@ -80,8 +80,9 @@ public class WekaModel {
         String header;
 
 		public void setup(Context context) throws IOException, InterruptedException {
-			URI[] files = context.getCacheFiles();
-			BufferedReader br = new BufferedReader(new FileReader(files[0].getPath()));
+			// URI[] files = context.getCacheFiles();
+			File file = new File("./header-m-00000");
+			BufferedReader br = new BufferedReader(new FileReader(file));
 			String strLineRead = "";
 			while ((strLineRead = br.readLine()) != null) {
 				val = new ArrayList<String>(Arrays.asList(strLineRead.split(",")));
@@ -124,7 +125,7 @@ public class WekaModel {
 		    NumericToNominal convert= new NumericToNominal();
 	        String[] options= new String[2];
 	        options[0]="-R";
-	        options[1]="32";  //range of variables to make numeric
+			options[1]="43";  //range of variables to make numeric
 	        
 
 	        try {
@@ -139,28 +140,13 @@ public class WekaModel {
             	newData.setClassIndex(newData.numAttributes() - 1);
           
 	        // Do 2-split cross validation
-    		Instances[][] split = crossValidationSplit(newData,2);
+    		Instances[][] split = crossValidationSplit(newData,5);
      
     	// Separate split into training and testing arrays
     		Instances[] trainingSplits = split[0];
     		Instances[] testingSplits = split[1];
     		
-    		models = new IBk(4);
-    	// Select model to train based on key
-//    		switch(key.get()%3) {
-//    		case 0 : models = new J48();
-//       		break;
-//    		case 1: models = new IBk();
-//    		break;
-//    		case 2: models = new DecisionTable();
-//    		break;
-//    		case 3: models = new IBk();
-//    		break;
-//    		case 4: models = new RandomForest();
-//    		break;
-//    		}
-    		
-//    		System.out.println(newData.classAttribute()+":"+newData.classIndex());
+    		models = new IBk(5);
     		
     		FastVector predictions = new FastVector();
     		for (int i = 0; i < trainingSplits.length; i++) {
@@ -171,7 +157,7 @@ public class WekaModel {
     		
     		double accuracy = calculateAccuracy(predictions);
 //    		System.out.println("Accuracy of model "+models.getClass().getSimpleName()+" is "+accuracy);
-				SerializationHelper.write("s3://naomi-hw2/output/models/"+models.getClass().getSimpleName()+key+".model", models);
+				SerializationHelper.write("/Users/Naomi/Documents/MR_Project/output/models/"+models.getClass().getSimpleName()+key+".model", models);
 	        } catch (Exception e) {
 				e.printStackTrace();
 			}

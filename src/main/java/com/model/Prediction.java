@@ -7,12 +7,22 @@ import java.io.*;
 import java.net.URI;
 import java.util.*;
 
-
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
+import weka.core.Attribute;
+import weka.core.FastVector;
+import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 import weka.filters.Filter;
@@ -32,16 +42,18 @@ public class Prediction
                 if (f.getName().endsWith(".model") ) {
                     try {
                         classifier = (Classifier) weka.core.SerializationHelper.read(f.toString());
-                        } catch (Exception e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
-                        models.add(classifier);
+                    } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
                     }
-
+                    models.add(classifier);
                 }
-            URI[] Hfiles = context.getCacheFiles();
-            BufferedReader br = new BufferedReader(new FileReader(Hfiles[0].getPath()));
+
+            }
+            // URI[] Hfiles = context.getCacheFiles();
+            File file = new File("./header-m-00000");
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            // BufferedReader br = new BufferedReader(new FileReader(Hfiles[0].getPath()));
             String strLineRead = "";
             while ((strLineRead = br.readLine()) != null) {
                 header = strLineRead;
@@ -77,7 +89,7 @@ public class Prediction
             NumericToNominal convert= new NumericToNominal();
             String[] options= new String[2];
             options[0]="-R";
-            options[1]="32";  //range of variables to make nominal
+            options[1]="43";  //range of variables to make nominal
 
             Instances testInstances1 =null;
             try {
@@ -104,21 +116,21 @@ public class Prediction
                     // Make the prediction here.
                     double predictionIndex = models.get(i).classifyInstance(testInstances1.instance(0));
                     if(predictionIndex == 0.0)
-                    	countZero++;
+                        countZero++;
                     else
-                    	countOne++;
-                    
+                        countOne++;
+
                 } catch (Exception e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-               
+
             }
-            
+
             if(countOne>=countZero)
-            	context.write(new Text(sampleID), new Text("1"));
+                context.write(new Text(sampleID), new Text("1"));
             else
-            	context.write(new Text(sampleID), new Text("0"));
+                context.write(new Text(sampleID), new Text("0"));
         }
     }
 }
